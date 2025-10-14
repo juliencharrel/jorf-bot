@@ -107,30 +107,25 @@ class JORFBot:
                 logger.info(f"  {i}. {title}")
             
             prompt = f"""
-Tu es un assistant spécialisé dans l'analyse du Journal Officiel français pour des stagiaires préparant le concours de l'INSP (Institut National du Service Public).
+Tu es un assistant spécialisé dans l'analyse du Journal Officiel français pour des stagiaires préparant le concours de l'INSP.
 
 Voici une partie des articles du Journal Officiel d'aujourd'hui (chunk {chunk_idx}/{len(chunks)}) :
 
 {articles_text}
 
-Analyse ces articles et crée un résumé structuré et informatif pour des stagiaires préparant le concours INSP. 
+RÈGLES STRICTES :
+- IGNORE complètement : nominations, départs à la retraite, mobilités, mutations, promotions internes
+- IGNORE complètement : textes techniques sans impact politique majeur
+- GARDE SEULEMENT : textes réglementaires majeurs, réformes importantes, politiques publiques nouvelles
 
-Concentre-toi sur :
-- Les textes importants pour la vie publique, notamment en lien avec l'actualité
-- Les politiques publiques nouvelles ou modifiées
-- Les évolutions institutionnelles
-- Tres tres tres peu de nominations sauf si elles sont vraiment hyper importantes (ministres surtout, ou personnages politiques importants), et pas de mobilites
-- Si il te reste de la place dans ton contexte tu peux ajouter des choses moins importantes
-- Pour des groupes de textes tres similaires tu peux tout résumer en une seule phrase
+Si aucun article ne correspond à ces critères, réponds simplement : "Aucun article important dans ce lot."
 
 Format de sortie :
-- Utilise des emojis pour rendre le message plus attractif
-- Structure avec des titres clairs
-- Sois hyper concis mais informatif
-- Adapte le ton pour une notification mobile
-- Limite à 1000 caractères maximum pour ce chunk, mais si tu n'as rien tu n'es pas obligé de remplir l'espace pour rien
-
-Commence par "📰 JOURNAL OFFICIEL - Partie {chunk_idx} 📰"
+- Commence par "📰 JOURNAL OFFICIEL - Partie {chunk_idx} 📰"
+- Utilise des emojis pour structurer (🔹, 📋, etc.)
+- Contenu utile en 2-3 phrases maximum
+- Maximum 500 caractères
+- Ton neutre mais structuré
 """
 
             try:
@@ -153,14 +148,23 @@ Commence par "📰 JOURNAL OFFICIEL - Partie {chunk_idx} 📰"
                 all_summaries.append(f"Erreur lors du traitement du chunk {chunk_idx}: {str(e)}")
         
         # Concaténer tous les résumés
-        if len(all_summaries) == 1:
-            final_summary = all_summaries[0]
+        # Filtrer les résumés vides ou sans contenu utile
+        useful_summaries = []
+        for summary in all_summaries:
+            clean_summary = summary.strip()
+            if clean_summary and not clean_summary.startswith("Aucun article important"):
+                useful_summaries.append(clean_summary)
+        
+        if not useful_summaries:
+            final_summary = "📰 JOURNAL OFFICIEL - Résumé du jour 📰\n\nAucun article particulièrement important aujourd'hui."
+        elif len(useful_summaries) == 1:
+            # Nettoyer l'en-tête de la partie si c'est le seul résumé
+            clean_summary = useful_summaries[0].replace("📰 JOURNAL OFFICIEL - Partie 1 📰", "").strip()
+            final_summary = f"📰 JOURNAL OFFICIEL - Résumé du jour 📰\n\n{clean_summary}"
         else:
             final_summary = "📰 JOURNAL OFFICIEL - Résumé du jour 📰\n\n"
-            for i, summary in enumerate(all_summaries, 1):
-                # Nettoyer le résumé (enlever les en-têtes répétées)
-                clean_summary = summary.replace(f"📰 JOURNAL OFFICIEL - Partie {i} 📰", "").strip()
-                final_summary += f"{clean_summary}\n\n"
+            for summary in useful_summaries:
+                final_summary += f"{summary}\n\n"
         
         logger.info(f"Résumé final généré avec {len(all_summaries)} chunks")
         return final_summary
