@@ -25,6 +25,9 @@ jobs:
         pip install -r requirements.txt
         
     - name: Vérification des variables d'environnement
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ALERTZY_KEY: ${{ secrets.ALERTZY_KEY }}
       run: |
         echo "OPENAI_API_KEY est défini: $([ -n "$OPENAI_API_KEY" ] && echo "OUI" || echo "NON")"
         echo "ALERTZY_KEY est défini: $([ -n "$ALERTZY_KEY" ] && echo "OUI" || echo "NON")"
