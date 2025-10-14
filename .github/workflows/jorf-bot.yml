@@ -1,0 +1,37 @@
+name: JORF Bot - Surveillance du Journal Officiel
+
+on:
+  schedule:
+    # Exécution quotidienne à 8h00 (UTC+1 = 7h00 UTC en hiver, 6h00 UTC en été)
+    - cron: '0 7 * * *'
+  workflow_dispatch: # Permet l'exécution manuelle
+
+jobs:
+  jorf-bot:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+      
+    - name: Configuration de Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Installation des dépendances
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Exécution du bot JORF
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ALERTZY_KEY: ${{ secrets.ALERTZY_KEY }}
+      run: |
+        python jorf_bot.py
+        
+    - name: Logs en cas d'erreur
+      if: failure()
+      run: |
+        echo "Le bot JORF a échoué. Vérifiez les logs ci-dessus."
