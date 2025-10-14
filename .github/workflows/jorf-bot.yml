@@ -27,7 +27,7 @@ jobs:
     - name: Exécution du bot JORF
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        ALERTZY_KEY: ${{ secrets.ALERTZY_KEY }}
+        ALERTZY_KEYS: ${{ secrets.ALERTZY_KEYS }}
         # Nettoyer les variables de proxy qui peuvent causer des conflits
         HTTP_PROXY: ""
         HTTPS_PROXY: ""

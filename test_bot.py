@@ -15,7 +15,7 @@ def main():
     load_dotenv()
     
     # Vérifier les variables d'environnement
-    required_vars = ['OPENAI_API_KEY', 'ALERTZY_KEY']
+    required_vars = ['OPENAI_API_KEY', 'ALERTZY_KEYS']
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     
     if missing_vars:

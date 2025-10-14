@@ -8,8 +8,12 @@ import os
 import feedparser
 import requests
 from openai import OpenAI
+from dotenv import load_dotenv
 import logging
 from datetime import datetime
+
+# Chargement des variables d'environnement
+load_dotenv()
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -19,7 +23,16 @@ class JORFBot:
     def __init__(self):
         self.rss_url = "https://droit.org/flux/jorf.rss"
         self.openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-        self.alertzy_key = os.getenv('ALERTZY_KEY')
+        # Support de plusieurs clés Alertzy séparées par des virgules
+        alertzy_keys_str = os.getenv('ALERTZY_KEYS', '')
+        self.alertzy_keys = [key.strip() for key in alertzy_keys_str.split(',') if key.strip()]
+        
+        # Debug pour voir la configuration
+        logger.info(f"Clés Alertzy configurées: {len(self.alertzy_keys)} clés trouvées")
+        if self.alertzy_keys:
+            logger.info(f"Première clé: {self.alertzy_keys[0][:10]}...")
+        else:
+            logger.warning("Aucune clé Alertzy trouvée dans ALERTZY_KEYS")
         
     def fetch_rss_feed(self):
         """Récupère le flux RSS du Journal Officiel"""
@@ -170,32 +183,37 @@ Format de sortie :
         return final_summary
     
     def send_to_alertzy(self, message):
-        """Envoie le message via Alertzy"""
-        if not self.alertzy_key:
-            logger.error("Clé Alertzy manquante")
+        """Envoie le message via Alertzy à tous les destinataires"""
+        if not self.alertzy_keys:
+            logger.error("Aucune clé Alertzy configurée")
             return False
         
-        try:
-            url = "https://alertzy.app/send"
-            data = {
-                "accountKey": self.alertzy_key,
-                "title": "📰 Journal Officiel - Résumé INSP",
-                "message": message,
-                "priority": "normal"
-            }
-            
-            response = requests.post(url, data=data)
-            
-            if response.status_code == 200:
-                logger.info("Message envoyé avec succès via Alertzy")
-                return True
-            else:
-                logger.error(f"Erreur lors de l'envoi Alertzy: {response.status_code} - {response.text}")
-                return False
+        success_count = 0
+        total_count = len(self.alertzy_keys)
+        
+        for i, alertzy_key in enumerate(self.alertzy_keys, 1):
+            try:
+                url = "https://alertzy.app/send"
+                data = {
+                    "accountKey": alertzy_key,
+                    "title": "📰 Journal Officiel - Résumé INSP",
+                    "message": message,
+                    "priority": "normal"
+                }
                 
-        except Exception as e:
-            logger.error(f"Erreur lors de l'envoi Alertzy: {e}")
-            return False
+                response = requests.post(url, data=data)
+                
+                if response.status_code == 200:
+                    logger.info(f"Message envoyé avec succès via Alertzy (destinataire {i}/{total_count})")
+                    success_count += 1
+                else:
+                    logger.error(f"Erreur lors de l'envoi Alertzy destinataire {i}: {response.status_code} - {response.text}")
+                    
+            except Exception as e:
+                logger.error(f"Erreur lors de l'envoi Alertzy destinataire {i}: {e}")
+        
+        logger.info(f"Envoi terminé: {success_count}/{total_count} messages envoyés avec succès")
+        return success_count > 0
     
     def run(self):
         """Fonction principale du bot"""
