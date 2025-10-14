@@ -130,7 +130,7 @@ Format de sortie :
 
             try:
                 response = self.openai_client.chat.completions.create(
-                    model="gpt-4",
+                    model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "Tu es un expert en droit administratif et en préparation aux concours de la fonction publique française."},
                         {"role": "user", "content": prompt}
