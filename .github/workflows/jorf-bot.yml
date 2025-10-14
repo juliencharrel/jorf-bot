@@ -24,10 +24,20 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
+    - name: Vérification des variables d'environnement
+      run: |
+        echo "OPENAI_API_KEY est défini: $([ -n "$OPENAI_API_KEY" ] && echo "OUI" || echo "NON")"
+        echo "ALERTZY_KEY est défini: $([ -n "$ALERTZY_KEY" ] && echo "OUI" || echo "NON")"
+        
     - name: Exécution du bot JORF
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ALERTZY_KEY: ${{ secrets.ALERTZY_KEY }}
+        # Nettoyer les variables de proxy qui peuvent causer des conflits
+        HTTP_PROXY: ""
+        HTTPS_PROXY: ""
+        http_proxy: ""
+        https_proxy: ""
       run: |
         python jorf_bot.py
         
