@@ -3,7 +3,7 @@ name: JORF Bot - Surveillance du Journal Officiel
 on:
   schedule:
     # Exécution quotidienne à 8h00 (UTC+1 = 7h00 UTC en hiver, 6h00 UTC en été)
-    - cron: '0 7 * * *'
+    #- cron: '0 7 * * *'
   workflow_dispatch: # Permet l'exécution manuelle
 
 jobs:
